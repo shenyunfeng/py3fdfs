@@ -11,7 +11,7 @@ long_description = f.read()
 f.close()
 
 sdict = {
-    'name' : 'fdfs_client-py',
+    'name' : 'py3fdfs',
     'version' : __version__,
     'description' : 'Python client for Fastdfs ver 4.06',
     'long_description' : long_description,
