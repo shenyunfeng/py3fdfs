@@ -368,7 +368,6 @@ class Storage_client(object):
             # if th.status == 2:
             #    raise DataError('[-] Error: remote file %s is not exist.' % 
             #                    (store_serv.group_name + __os_sep__.encode() + remote_filename))
-            print(th.status)
             if th.status != 0:
                 raise DataError('Error: %d %s' % (th.status, os.strerror(th.status)))
             if download_type == FDFS_DOWNLOAD_TO_FILE:
@@ -379,9 +378,6 @@ class Storage_client(object):
             raise
         finally:
             self.pool.release(store_conn)
-        print(store_serv.group_name)
-        print(__os_sep__.encode())
-        print(remote_filename)
         ret_dic = {
             'Remote file_id': store_serv.group_name + __os_sep__.encode() + remote_filename,
             'Content': file_buffer if download_type == FDFS_DOWNLOAD_TO_FILE else recv_buffer,
