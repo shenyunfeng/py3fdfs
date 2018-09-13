@@ -26,7 +26,7 @@ from fdfs_client.file_crypt import FileCrypt
 __os_sep__ = "/" if platform.system() == 'Windows' else os.sep
 
 
-def tcp_send_file(conn, filename, buffer_size=1024, is_encrypt=False):
+def tcp_send_file(conn, filename, is_encrypt, buffer_size=1024):
     '''
     Send file to server, and split into multiple pkgs while sending.
     arguments:
@@ -85,7 +85,7 @@ def tcp_send_file_ex(conn, filename, buffer_size=4096):
     return nbytes
 
 
-def tcp_recv_file(conn, local_filename, file_size, buffer_size=1024, is_encrypt=False):
+def tcp_recv_file(conn, local_filename, file_size, is_encrypt=False, buffer_size=1024, ):
     '''
     Receive file from server, fragmented it while receiving and write to disk.
     arguments:
@@ -190,7 +190,8 @@ class Storage_client(object):
                  }
 
         '''
-
+        if is_encrypt:
+            file_size = 16-file_size%16+file_size
         store_conn = self.pool.get_connection()
         th = Tracker_header()
         master_filename_len = len(master_filename) if master_filename else 0
