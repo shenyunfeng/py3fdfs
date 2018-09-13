@@ -21,7 +21,7 @@ from fdfs_client.exceptions import (
     DataError
 )
 from fdfs_client.utils import *
-from file_crypt import FileCrypt
+from fdfs_client.file_crypt import FileCrypt
 
 __os_sep__ = "/" if platform.system() == 'Windows' else os.sep
 
