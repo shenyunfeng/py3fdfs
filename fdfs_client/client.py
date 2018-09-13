@@ -59,7 +59,7 @@ class Fdfs_client(object):
         except:
             pass
 
-    def upload_by_filename(self, filename, meta_dict=None):
+    def upload_by_filename(self, filename, meta_dict=None, is_encrypt=False):
         '''
         Upload a file to Storage server.
         arguments:
@@ -85,7 +85,7 @@ class Fdfs_client(object):
         tc = Tracker_client(self.tracker_pool)
         store_serv = tc.tracker_query_storage_stor_without_group()
         store = Storage_client(store_serv.ip_addr, store_serv.port, self.timeout)
-        return store.storage_upload_by_filename(tc, store_serv, filename, meta_dict)
+        return store.storage_upload_by_filename(tc, store_serv, filename, meta_dict, is_encrypt)
 
     def upload_by_file(self, filename, meta_dict=None):
         isfile, errmsg = fdfs_check_file(filename)
@@ -333,7 +333,7 @@ class Fdfs_client(object):
         store = Storage_client(store_serv.ip_addr, store_serv.port, self.timeout)
         return store.storage_delete_file(tc, store_serv, remote_filename)
 
-    def download_to_file(self, local_filename, remote_file_id, offset=0, down_bytes=0):
+    def download_to_file(self, local_filename, remote_file_id, offset=0, down_bytes=0, is_encrypt=False):
         '''
         Download a file from Storage server.
         arguments:
@@ -360,7 +360,7 @@ class Fdfs_client(object):
         store_serv = tc.tracker_query_storage_fetch(group_name, remote_filename)
         store = Storage_client(store_serv.ip_addr, store_serv.port, self.timeout)
         return store.storage_download_to_file(tc, store_serv, local_filename, file_offset, download_bytes,
-                                              remote_filename)
+                                              remote_filename, is_encrypt)
 
     def download_to_buffer(self, remote_file_id, offset=0, down_bytes=0):
         '''
