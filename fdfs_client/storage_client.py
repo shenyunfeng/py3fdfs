@@ -243,8 +243,8 @@ class Storage_client(object):
         finally:
             self.pool.release(store_conn)
         ret_dic = {
-            'Group name': group_name.strip(b'\x00'),
-            'Remote file_id': group_name.strip(b'\x00') + __os_sep__.encode() + remote_filename,
+            'Group name': group_name.strip(b'\x00').decode(),
+            'Remote file_id': (group_name.strip(b'\x00') + __os_sep__.encode() + remote_filename).decode(),
             'Status': 'Upload successed.',
             'Local file name': file_buffer if (upload_type == FDFS_UPLOAD_BY_FILENAME
                                                or upload_type == FDFS_UPLOAD_BY_FILE
@@ -252,7 +252,7 @@ class Storage_client(object):
             'Uploaded size': appromix(send_file_size) if (upload_type == FDFS_UPLOAD_BY_FILENAME
                                                           or upload_type == FDFS_UPLOAD_BY_FILE
                                                           ) else appromix(len(file_buffer)),
-            'Storage IP': store_serv.ip_addr
+            'Storage IP': store_serv.ip_addr.decode()
         }
         return ret_dic
 
