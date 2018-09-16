@@ -26,7 +26,7 @@ from fdfs_client.file_crypt import FileCrypt
 __os_sep__ = "/" if platform.system() == 'Windows' else os.sep
 
 
-def tcp_send_file(conn, filename, is_encrypt, buffer_size=1024):
+def tcp_send_file(conn, filename, file_crypt, buffer_size=1024):
     '''
     Send file to server, and split into multiple pkgs while sending.
     arguments:
@@ -43,9 +43,8 @@ def tcp_send_file(conn, filename, is_encrypt, buffer_size=1024):
                 send_size = len(send_buffer)
                 if send_size == 0:
                     break
-                if is_encrypt:
-                    fc = FileCrypt()
-                    send_buffer = fc.encrypt(send_buffer)
+                if file_crypt:
+                    send_buffer = file_crypt.encrypt(send_buffer)
                 tcp_send_data(conn, send_buffer)
                 file_size += send_size
             except ConnectionError as e:
@@ -85,7 +84,7 @@ def tcp_send_file_ex(conn, filename, buffer_size=4096):
     return nbytes
 
 
-def tcp_recv_file(conn, local_filename, file_size, is_encrypt=False, buffer_size=1024, ):
+def tcp_recv_file(conn, local_filename, file_size, file_crypt=None, buffer_size=1024, ):
     '''
     Receive file from server, fragmented it while receiving and write to disk.
     arguments:
@@ -105,9 +104,8 @@ def tcp_recv_file(conn, local_filename, file_size, is_encrypt=False, buffer_size
                     file_buffer, recv_size = tcp_recv_response(conn, buffer_size, buffer_size)
                 else:
                     file_buffer, recv_size = tcp_recv_response(conn, remain_bytes, buffer_size)
-                if is_encrypt:
-                    fc = FileCrypt()
-                    file_buffer = fc.decrypt(file_buffer)
+                if file_crypt:
+                    file_buffer = file_crypt.decrypt(file_buffer)
                 f.write(file_buffer)
                 remain_bytes -= buffer_size
                 total_file_size += recv_size
@@ -164,7 +162,7 @@ class Storage_client(object):
         return True
 
     def _storage_do_upload_file(self, tracker_client, store_serv, file_buffer, file_size=None, upload_type=None,
-                                meta_dict=None, cmd=None, master_filename=None, prefix_name=None, file_ext_name=None, is_encrypt=False):
+                                meta_dict=None, cmd=None, master_filename=None, prefix_name=None, file_ext_name=None, file_crypt=None):
         '''
         core of upload file.
         arguments:
@@ -190,7 +188,7 @@ class Storage_client(object):
                  }
 
         '''
-        if is_encrypt:
+        if file_crypt:
             file_size = 16-file_size%16+file_size
         store_conn = self.pool.get_connection()
         th = Tracker_header()
@@ -215,7 +213,7 @@ class Storage_client(object):
         try:
             tcp_send_data(store_conn, send_buffer)
             if upload_type == FDFS_UPLOAD_BY_FILENAME:
-                send_file_size = tcp_send_file(store_conn, file_buffer, is_encrypt)
+                send_file_size = tcp_send_file(store_conn, file_buffer, file_crypt)
             elif upload_type == FDFS_UPLOAD_BY_BUFFER:
                 tcp_send_data(store_conn, file_buffer)
             elif upload_type == FDFS_UPLOAD_BY_FILE:
@@ -256,11 +254,11 @@ class Storage_client(object):
         }
         return ret_dic
 
-    def storage_upload_by_filename(self, tracker_client, store_serv, filename, meta_dict=None, is_encrypt=False):
+    def storage_upload_by_filename(self, tracker_client, store_serv, filename, meta_dict=None, file_crypt=None):
         file_size = os.stat(filename).st_size
         file_ext_name = get_file_ext_name(filename)
         return self._storage_do_upload_file(tracker_client, store_serv, filename, file_size, FDFS_UPLOAD_BY_FILENAME,
-                                            meta_dict, STORAGE_PROTO_CMD_UPLOAD_FILE, None, None, file_ext_name, is_encrypt)
+                                            meta_dict, STORAGE_PROTO_CMD_UPLOAD_FILE, None, None, file_ext_name, file_crypt)
 
     def storage_upload_by_file(self, tracker_client, store_serv, filename, meta_dict=None):
         file_size = os.stat(filename).st_size
@@ -347,7 +345,7 @@ class Storage_client(object):
         return ('Delete file successed.', remote_filename, store_serv.ip_addr)
 
     def _storage_do_download_file(self, tracker_client, store_serv, file_buffer, offset, download_size,
-                                  download_type, remote_filename, is_encrypt=False):
+                                  download_type, remote_filename, file_crypt=None):
         '''
         Core of download file from storage server.
         You can choice download type, optional FDFS_DOWNLOAD_TO_FILE or 
@@ -379,7 +377,7 @@ class Storage_client(object):
             if th.status != 0:
                 raise DataError('Error: %d %s' % (th.status, os.strerror(th.status)))
             if download_type == FDFS_DOWNLOAD_TO_FILE:
-                total_recv_size = tcp_recv_file(store_conn, file_buffer, th.pkg_len, is_encrypt)
+                total_recv_size = tcp_recv_file(store_conn, file_buffer, th.pkg_len, file_crypt)
             elif download_type == FDFS_DOWNLOAD_TO_BUFFER:
                 recv_buffer, total_recv_size = tcp_recv_response(store_conn, th.pkg_len)
         except:
@@ -395,9 +393,9 @@ class Storage_client(object):
         return ret_dic
 
     def storage_download_to_file(self, tracker_client, store_serv, local_filename, file_offset, download_bytes,
-                                 remote_filename, is_encrypt=False):
+                                 remote_filename, file_crypt=None):
         return self._storage_do_download_file(tracker_client, store_serv, local_filename, file_offset, download_bytes,
-                                              FDFS_DOWNLOAD_TO_FILE, remote_filename, is_encrypt)
+                                              FDFS_DOWNLOAD_TO_FILE, remote_filename, file_crypt)
 
     def storage_download_to_buffer(self, tracker_client, store_serv, file_buffer, file_offset, download_bytes,
                                    remote_filename):
