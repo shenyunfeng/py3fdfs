@@ -12,13 +12,15 @@ The Python interface to the Fastdfs Ver 4.06.
 	3. call memeber functions
 
     >>> from fdfs_client.client import *
-    >>> client = Fdfs_client('/etc/fdfs/client.conf')
-    >>> ret = client.upload_by_filename('test')
+    >>> from fdfs_client.file_crypt import FileCrypt
+    >>> fc = FileCrypt()
+    >>> client = Fdfs_client(get_tracker_conf('fdfs_config.conf'))
+    >>> ret = client.upload_by_filename('test', file_crypt=fc)
 	>>> ret
 	{'Group name':'group1','Status':'Upload successed.', 'Remote file_id':'group1/M00/00/00/
     	wKjzh0_xaR63RExnAAAaDqbNk5E1398.py','Uploaded size':'6.0KB','Local file name':'test'
 		, 'Storage IP':'192.168.243.133'}
-
+    >>> ret2 = client.download_to_file('2.docx', res['Remote file_id'], file_crypt=fc)
 ## API Reference
 
 Class Fdfs_client:
