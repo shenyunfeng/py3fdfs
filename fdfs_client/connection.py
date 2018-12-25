@@ -175,7 +175,10 @@ def tcp_recv_response(conn, bytes_size, buffer_size=4096):
     total_size = 0
     try:
         while bytes_size > 0:
-            resp = conn._sock.recv(buffer_size)
+            if bytes_size < buffer_size:
+                resp = conn._sock.recv(bytes_size)
+            else:
+                resp = conn._sock.recv(buffer_size)
             recv_buff.append(resp)
             total_size += len(resp)
             bytes_size -= len(resp)
