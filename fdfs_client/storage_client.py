@@ -188,8 +188,8 @@ class Storage_client(object):
                  }
 
         '''
-        if file_crypt:
-            file_size = 16-file_size%16+file_size
+        #if file_crypt:
+        #    file_size = 16-file_size%16+file_size
         store_conn = self.pool.get_connection()
         th = Tracker_header()
         master_filename_len = len(master_filename) if master_filename else 0
