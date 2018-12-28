@@ -32,7 +32,7 @@ def appromix(size, base=0):
     raise ValueError('[-] Error: number too big.')
 
 
-def get_file_ext_name(filename, double_ext=True):
+def get_file_ext_name(filename, double_ext=False):
     li = filename.split(os.extsep)
     if len(li) <= 1:
         return ''
