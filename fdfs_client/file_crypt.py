@@ -2,7 +2,7 @@ from Crypto.Cipher import AES
 
 class FileCrypt():
     def __init__(self, key='BgGa2YD1TLZ4kcJL'):
-        self.key = key
+        self.key = key.encode('utf-8')
         self.mode = AES.MODE_CBC
 
     # 加密函数，如果text不是16的倍数【加密文本text必须为16的倍数！】，那就补足为16的倍数
