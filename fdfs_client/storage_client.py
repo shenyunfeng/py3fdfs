@@ -256,6 +256,8 @@ class Storage_client(object):
 
     def storage_upload_by_filename(self, tracker_client, store_serv, filename, meta_dict=None, file_crypt=None):
         file_size = os.stat(filename).st_size
+        if file_crypt:
+            file_size = file_size+16-file_size%16
         file_ext_name = get_file_ext_name(filename)
         return self._storage_do_upload_file(tracker_client, store_serv, filename, file_size, FDFS_UPLOAD_BY_FILENAME,
                                             meta_dict, STORAGE_PROTO_CMD_UPLOAD_FILE, None, None, file_ext_name, file_crypt)
