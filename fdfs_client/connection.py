@@ -2,22 +2,19 @@
 # -*- coding: utf-8 -*-
 # filename: connection.py
 
-import socket
 import os
-import sys
-import time
 import random
+import socket
+import sys
 from itertools import chain
+
 from fdfs_client.exceptions import (
-    FDFSError,
-    ConnectionError,
-    ResponseError,
-    InvaildResponse,
-    DataError
+    ConnectionError
 )
-
-
 # start class Connection
+from fdfs_client.fdfs_protol import Tracker_header, FDFS_PROTO_CMD_ACTIVE_TEST
+
+
 class Connection(object):
     '''Manage TCP comunication to and from Fastdfs Server.'''
 
@@ -79,8 +76,19 @@ class Connection(object):
             return "[-] Error: %s connect to %s:%s. %s." % \
                    (exception.args[0], self.remote_addr, self.remote_port, exception.args[1])
 
+    def is_alive(self):
+        header = Tracker_header()
+        header.cmd = FDFS_PROTO_CMD_ACTIVE_TEST
+        header.status = 2
+        try:
+            header.send_header(self)
+            header.recv_header(self)
+            return True
+        except:
+            return False
 
-# end class Connection
+    # end class Connection
+
 
 # start ConnectionPool
 class ConnectionPool(object):
@@ -126,10 +134,13 @@ class ConnectionPool(object):
         '''Get a connection from pool.'''
         self._check_pid()
         try:
-            conn = self._conns_available.pop()
-            # print '[+] Get a connection from pool %s.' % self.pool_name
-            # print '\tLocal address is %s:%s.' % conn._sock.getsockname()
-            # print '\tRemote address is %s:%s' % (conn.remote_addr, conn.remote_port)
+            while 1:
+                conn = self._conns_available.pop()
+                # print '[+] Get a connection from pool %s.' % self.pool_name
+                # print '\tLocal address is %s:%s.' % conn._sock.getsockname()
+                # print '\tRemote address is %s:%s' % (conn.remote_addr, conn.remote_port)
+                if conn.is_alive():
+                    break
         except IndexError:
             conn = self.make_conn()
         self._conns_inuse.add(conn)
@@ -199,3 +210,10 @@ def tcp_send_data(conn, bytes_stream):
         conn._sock.sendall(bytes_stream)
     except (socket.error, socket.timeout) as e:
         raise ConnectionError('[-] Error: while writting to socket: (%s)' % e.args)
+
+
+def test_connection_ping():
+    from fdfs_client import client
+    cli = client.Fdfs_client(client.get_tracker_conf(os.path.expanduser('~/.local/etc/fdfs/client.conf')))
+    conn = cli.tracker_pool.get_connection()
+    conn.is_alive()

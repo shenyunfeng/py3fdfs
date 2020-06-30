@@ -164,7 +164,7 @@ member functions:
   '''
   Download a file from Storage server.
   arguments:
-       @local_filename: string, local name of file 
+       @local_filename: string, local name of file
        @remote_file_id: string, file_id of file that is on storage server
 	   @offset: long
 	   @down_bytes: long
@@ -284,7 +284,7 @@ member functions:
            'Storage IP' : storage_ip
        }
   '''
-	   
+
 * modify_by_filename(self, filename, appender_fileid, offset = 0)
   '''
   Modify a file in Storage server by filename.
@@ -335,4 +335,3 @@ Special thanks to:
 
 * Andy Mccurdy, author of redis-py, referenced his code.
 * g.rodola, author sendfile module for python, g.rodola@gmail.com
-
