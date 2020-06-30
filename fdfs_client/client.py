@@ -636,7 +636,7 @@ class Fdfs_client(object):
         else:
             self.upload_chunks_by_filename(filename, chunk_size)
 
-    def upload_chunks_by_filename(self, filename: str, chunk_size=1024 * 500):
+    def upload_chunks_by_filename(self, filename: str, chunk_size=1024 * 1024 * 2):
         ext_name = os.path.splitext(filename)[-1]
         ext_name = ext_name.replace('.', '')
         with open(filename, 'rb') as fin:
