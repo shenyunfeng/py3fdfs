@@ -1,3 +1,13 @@
+# 优化说明
+
+在 py3fdfs 基础上优化以下内容：
+
+1. 修复append 上传的bug
+2. 增加 smart_upload_by_filename，根据文件大小，自动选择单文件上传，还是切片上传。切片上传支持自动切片
+
+
+# 以下是原版说明
+
 # Fdfs_client py
 
 The Python interface to the Fastdfs Ver 4.06.
@@ -7,6 +17,7 @@ The Python interface to the Fastdfs Ver 4.06.
     $ sudo python setup.py install
 
 ## Getting Started
+
 	1. import fdfs_client.client module
 	2. instantiate class Fdfs_client
 	3. call memeber functions

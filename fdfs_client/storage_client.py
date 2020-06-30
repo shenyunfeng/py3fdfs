@@ -2,15 +2,15 @@
 # -*- coding: utf-8 -*-
 # filename: storage_client.py
 
-import os
-import stat
-import errno
-import struct
-import socket
 import datetime
-import platform
+import errno
 import hashlib
-from fdfs_client.fdfs_protol import *
+import os
+import platform
+import socket
+import stat
+import struct
+
 from fdfs_client.connection import *
 # from test_fdfs.sendfile import *
 from fdfs_client.exceptions import (
@@ -20,8 +20,9 @@ from fdfs_client.exceptions import (
     InvaildResponse,
     DataError
 )
-from fdfs_client.utils import *
+from fdfs_client.fdfs_protol import *
 from fdfs_client.file_crypt import FileCrypt
+from fdfs_client.utils import *
 
 __os_sep__ = "/" if platform.system() == 'Windows' else os.sep
 
@@ -162,7 +163,8 @@ class Storage_client(object):
         return True
 
     def _storage_do_upload_file(self, tracker_client, store_serv, file_buffer, file_size=None, upload_type=None,
-                                meta_dict=None, cmd=None, master_filename=None, prefix_name=None, file_ext_name=None, file_crypt=None):
+                                meta_dict=None, cmd=None, master_filename=None, prefix_name=None, file_ext_name=None,
+                                file_crypt=None):
         '''
         core of upload file.
         arguments:
@@ -188,7 +190,7 @@ class Storage_client(object):
                  }
 
         '''
-        #if file_crypt:
+        # if file_crypt:
         #    file_size = 16-file_size%16+file_size
         store_conn = self.pool.get_connection()
         th = Tracker_header()
@@ -256,11 +258,12 @@ class Storage_client(object):
 
     def storage_upload_by_filename(self, tracker_client, store_serv, filename, meta_dict=None, file_crypt=None):
         file_size = os.stat(filename).st_size
-        if file_crypt and file_size%16>0:
-            file_size = file_size+16-file_size%16
+        if file_crypt and file_size % 16 > 0:
+            file_size = file_size + 16 - file_size % 16
         file_ext_name = get_file_ext_name(filename)
         return self._storage_do_upload_file(tracker_client, store_serv, filename, file_size, FDFS_UPLOAD_BY_FILENAME,
-                                            meta_dict, STORAGE_PROTO_CMD_UPLOAD_FILE, None, None, file_ext_name, file_crypt)
+                                            meta_dict, STORAGE_PROTO_CMD_UPLOAD_FILE, None, None, file_ext_name,
+                                            file_crypt)
 
     def storage_upload_by_file(self, tracker_client, store_serv, filename, meta_dict=None):
         file_size = os.stat(filename).st_size
@@ -363,7 +366,7 @@ class Storage_client(object):
         remote_filename_len = len(remote_filename)
         th.pkg_len = FDFS_PROTO_PKG_LEN_SIZE * 2 + FDFS_GROUP_NAME_MAX_LEN + remote_filename_len
         th.cmd = STORAGE_PROTO_CMD_DOWNLOAD_FILE
-        #下面这行是新加的 解决struct.pack的bug
+        # 下面这行是新加的 解决struct.pack的bug
         remote_filename = remote_filename.encode()
         try:
             th.send_header(store_conn)
@@ -460,7 +463,7 @@ class Storage_client(object):
         return ret_dict
 
     def _storage_do_append_file(self, tracker_client, store_serv, file_buffer, file_size, upload_type,
-                                appended_filename):
+                                appended_filename: bytes):
         store_conn = self.pool.get_connection()
         th = Tracker_header()
         appended_filename_len = len(appended_filename)
@@ -470,7 +473,7 @@ class Storage_client(object):
             th.send_header(store_conn)
             # append_fmt: |-appended_filename_len(8)-file_size(8)-appended_filename(len)
             #             -filecontent(filesize)-|
-            append_fmt = '!Q Q %ds' % appended_filename_len
+            append_fmt = b'!Q Q %ds' % appended_filename_len
             send_buffer = struct.pack(append_fmt, appended_filename_len, file_size, appended_filename)
             tcp_send_data(store_conn, send_buffer)
             if upload_type == FDFS_UPLOAD_BY_FILENAME:
@@ -494,16 +497,22 @@ class Storage_client(object):
         return ret_dict
 
     def storage_append_by_filename(self, tracker_client, store_serv, local_filename, appended_filename):
+        if isinstance(appended_filename, str):
+            appended_filename = appended_filename.encode()
         file_size = os.stat(local_filename).st_size
         return self._storage_do_append_file(tracker_client, store_serv, local_filename, file_size,
                                             FDFS_UPLOAD_BY_FILENAME, appended_filename)
 
     def storage_append_by_file(self, tracker_client, store_serv, local_filename, appended_filename):
+        if isinstance(appended_filename, str):
+            appended_filename = appended_filename.encode()
         file_size = os.stat(local_filename).st_size
         return self._storage_do_append_file(tracker_client, store_serv, local_filename, file_size, FDFS_UPLOAD_BY_FILE,
                                             appended_filename)
 
     def storage_append_by_buffer(self, tracker_client, store_serv, file_buffer, appended_filename):
+        if isinstance(appended_filename, str):
+            appended_filename = appended_filename.encode()
         file_size = len(file_buffer)
         return self._storage_do_append_file(tracker_client, store_serv, file_buffer, file_size, FDFS_UPLOAD_BY_BUFFER,
                                             appended_filename)
