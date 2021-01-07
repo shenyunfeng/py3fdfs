@@ -8,12 +8,12 @@
   date: 2012-06-21
 '''
 
-import os
-import sys
-from fdfs_client.utils import *
-from fdfs_client.tracker_client import *
+import logging
+
 from fdfs_client.storage_client import *
-from fdfs_client.exceptions import *
+from fdfs_client.tracker_client import *
+
+log = logging.getLogger('py3fdfs')
 
 
 def get_tracker_conf(conf_path='client.conf'):
@@ -617,3 +617,40 @@ class Fdfs_client(object):
         store_serv = tc.tracker_query_storage_update(group_name, appender_filename)
         store = Storage_client(store_serv.ip_addr, store_serv.port, self.timeout)
         return store.storage_modify_by_buffer(tc, store_serv, filebuffer, file_offset, filesize, appender_filename)
+
+    def smart_upload_by_filename(self, filename: str, file_size_to_toggle=1024 * 1024 * 20, chunk_size=1024 * 500):
+        """
+        根据文件大小，判断是直接上传还是切片上传
+
+        :param filename: 上传的文件名
+        :param file_size_to_toggle: 临界文件大小。大于这个值使用分片上传。否则直接上传
+        :param chunk_size: 分片大小
+        :return:
+        """
+        assert isinstance(filename, str), 'filename should be str type.'
+        if not os.path.isfile(filename):
+            raise FDFSError('It is not a file %s' % filename)
+        file_size = os.path.getsize(filename)
+        if file_size < file_size_to_toggle:
+            self.upload_by_filename(filename)
+        else:
+            self.upload_chunks_by_filename(filename, chunk_size)
+
+    def upload_chunks_by_filename(self, filename: str, chunk_size=1024 * 1024 * 2):
+        ext_name = os.path.splitext(filename)[-1]
+        ext_name = ext_name.replace('.', '')
+        with open(filename, 'rb') as fin:
+            buffer = fin.read(chunk_size)
+            ret = self.upload_appender_by_buffer(buffer, ext_name)
+            remote_fileid = ret['Remote file_id']
+            buffer = fin.read(chunk_size)
+            while buffer:
+                try:
+                    self.append_by_buffer(buffer, remote_fileid)
+                    # todo 若fin.read 报错，则会导致文件上传错误。
+                    buffer = fin.read(chunk_size)
+                except Exception as e:
+                    log.exception('smart upload fail, retry now. fileid: %s, exception: %s',
+                                  remote_fileid, e)
+                    ret = self.delete_file(remote_fileid)
+                    raise FDFSError('smart upload failed', remote_fileid, ret)

@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import os
+
 from fdfs_client import __version__
+
 try:
     from setuptools import setup, Extension
 except ImportError:
@@ -32,6 +34,5 @@ sdict = {
     # 'ext_modules' : [Extension('fdfs_client.sendfile',
     #                          sources = ['fdfs_client/sendfilemodule.c'])],
 }
-
 
 setup(**sdict)
